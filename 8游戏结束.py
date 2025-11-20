@@ -1,0 +1,699 @@
+# 引入需要的库
+import pygame
+import random
+# 退出游戏
+import sys
+# 不用每次都写pygame.xxx
+
+# 初始化
+pygame.init()
+
+# 游戏常量
+screen_width = 1280
+screen_height = 768
+
+
+# 颜色定义
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 120, 255)
+GREEN = (0, 200, 100)
+RED = (255, 80, 80)
+YELLOW = (255, 220, 0)
+PURPLE = (180, 100, 240)
+DARK_BLUE = (0, 60, 120)
+LIGHT_GRAY = (240, 240, 240)
+DARK_GRAY = (60, 60, 60)
+BUTTON_GREEN = (0, 180, 80)
+PANEL_BLUE = (0, 255, 255)
+# hover-悬停
+BUTTON_HOVER = BLUE
+
+# 创建游戏窗口
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("深空哨站 - 太空站资源管理游戏")
+
+# 创建时钟对象
+clock = pygame.time.Clock()
+FPS = 60
+
+# 加载字体
+title_font = pygame.font.SysFont("microsoftyahei",48,bold=True)
+header_font = pygame.font.SysFont("microsoftyahei",32,bold=True)
+normal_font = pygame.font.SysFont("microsoftyahei",24)
+small_font = pygame.font.SysFont("microsoftyahei",20)
+button_font = pygame.font.SysFont('microsoftyahei', 32, bold=True)
+
+# 游戏数据
+# 资源
+resources ={
+    "能源": 50,
+    "食物": 30, 
+    "水源": 10,
+    "氧气": 30,
+    "材料": 0
+}
+
+# 模块
+modules= {
+     "太阳能板": {"等级": 1, "效率": 5},
+    "水循环系统": {"等级": 1, "效率": 3},
+    "氧气生成器": {"等级": 1, "效率": 4},
+    "温室": {"等级": 1, "效率": 2},
+    "采矿机": {"等级": 1, "效率": 2}
+}
+
+# 人员
+crew ={
+     "工程师": 2,
+    "科学家": 1,
+    "医生": 1,
+    "飞行员": 1
+}
+
+# 天数从1开始
+day = 1
+
+# 游戏状态,因为这里只写了游戏的封面，跳转后游戏才开始
+game_started = False
+game_over = False
+message = "欢迎来到深空哨站"
+
+# 按钮的通用函数
+def draw_button(rect,text,color,hover_color,font=button_font):
+    # 获取鼠标点击where
+    mouse_pos = pygame.mouse.get_pos()
+    # 判断点击是不是在碰撞箱范围
+    is_hover = rect.collidepoint(mouse_pos)
+
+    # 悬停按钮变化
+    button_color = hover_color if is_hover else color
+    # 绘制按钮底色
+    pygame.draw.rect(screen,button_color,rect,border_radius=8)
+    # 绘制按钮边框
+    pygame.draw.rect(screen,WHITE,rect,2,border_radius =8)
+
+    # 按钮表面的文字
+    text_surf = font.render(text,True,(0, 40, 80) )
+    # 按钮文字的where
+    text_rect = text_surf.get_rect(center=rect.center)
+    screen.blit(text_surf,text_rect)
+
+    # 只返回交互信息，比如悬停状态。而视觉信息比如颜色文字等在内部处理就好，不用返回
+    return is_hover
+
+def draw_game_over_screen():
+    screen.blit(pygame.transform.scale(pygame.image.load("../python-game-spacecontrol/sources/photos/win.png"),(screen_width,screen_height)),(0,0))
+    # screen.fill(BLACK)
+
+    # 重新开始原因
+    game_over_text = title_font.render("游戏结束",True,WHITE)
+    screen.blit(game_over_text,(100,300))
+
+    # game_over_reason =normal_font.render ("你的资源严重不足导致无人生还。",True,WHITE)
+    # screen.blit(game_over_reason,(100,400))
+
+    # 重新开始按钮
+    restart_button_width,restart_button_heigh = 200,60
+    restart_button_x = screen_width //2- restart_button_width // 2
+    restart_button_y = 550
+
+    # 重新开始按钮区域和写过的函数
+    restart_button = pygame.Rect(restart_button_x,restart_button_y,restart_button_width,restart_button_heigh)
+    draw_button(restart_button,"重新开始",BUTTON_GREEN,BUTTON_HOVER)
+
+    
+
+    return restart_button,game_over_text
+
+
+
+# 开始界面
+def draw_start_screen():
+    screen.blit(pygame.transform.scale(pygame.image.load("../python-game-spacecontrol/sources/photos/1.png"),(screen_width,screen_height)),(0,0))
+
+    
+    pygame.draw.rect(screen,(WHITE),(210,100,850,250))
+    screen.blit(pygame.transform.scale(pygame.image.load("../python-game-spacecontrol/sources/photos/3.png"),(750,300)),(250,90))
+
+    # 绘制标题
+    title_surface = title_font.render("深空哨站-太空资源管理游戏", True, WHITE)
+    subtitle_surface=title_font.render("请合理管理资源，避免资源被耗尽！", True, YELLOW)
+    screen.blit(title_surface,(screen_width //2 - title_surface.get_width() // 2,150))
+    screen.blit(subtitle_surface,(screen_width // 2 - subtitle_surface.get_width() // 2,250))
+
+    # 一些描述
+    descriptions = [
+        ""
+    ]
+    # 对于描述的样式
+    # enumerate(元素)--可以获取索引和元素
+    for i,desc in enumerate(descriptions):
+        desc_surface = normal_font.render(desc,True,WHITE)
+        screen.blit(desc_surface,(screen_width // 2 - desc_surface.get_width() // 2,320+i*40))
+
+        # 开始按钮
+        buttonstart_width,buttonstart_heigh = 200,60
+        buttonstart_x = screen_width // 2 - buttonstart_width // 2
+        buttonstart_y = 550
+
+       
+
+        # 检测鼠标是否在按钮上
+        mouse_pos = pygame.mouse.get_pos()
+        buttonstart_rect = pygame.Rect(buttonstart_x,buttonstart_y,buttonstart_width,buttonstart_heigh)
+        # collidepoint检测碰撞是否在矩形内
+        is_hover = buttonstart_rect.collidepoint(mouse_pos)
+
+        
+
+        # 悬停按钮变化
+        buttonstart_color = BUTTON_HOVER  if is_hover else YELLOW
+        # 按钮的内部填充
+        pygame.draw.rect(screen,buttonstart_color,buttonstart_rect,border_radius=12)
+        # 按钮的边框样式，区别在于中间有参数2是边框粗细
+        pygame.draw.rect(screen,WHITE,buttonstart_rect,3,border_radius=12)
+
+        # 按钮的文字
+        start_text = button_font.render("开始游戏",True,(0, 20, 40) )
+        # 让start_text获取按钮矩形范围，然后按钮的中心作为中心，居中，达成文字整体居中
+        text_rect = start_text.get_rect(center=buttonstart_rect.center)
+        screen.blit(start_text,text_rect)
+
+        # 绘制提示文字(200,200,200)是颜色
+        # hint_text=normal_font.render("鼠标点击任意位置开始游戏",True,(200,200,200))
+        # screen.blit(hint_text,(screen_width //2 - hint_text.get_width() // 2,630))
+        # # 返回按钮区域用于点击检测，不然就只是图片不会返回按钮点击，一定要有
+        return buttonstart_rect
+
+
+
+    
+
+    # 绘制资源条
+    # 进度条都是bar
+# 这里注意缩进，是一个新的函数，要顶左边缩进，不然会报错
+
+
+def draw_resource_bar(resource,value,x,y,width=200):
+
+    x = 90
+    y -= 180
+
+    pygame.draw.rect(screen,LIGHT_GRAY,(x,y,width,25),border_radius=4)
+
+    
+
+    colors = {
+            "能源": YELLOW,
+            "食物": YELLOW, 
+            "水源": YELLOW,
+            "氧气": YELLOW,
+            "材料": YELLOW
+        }
+
+        # max是为了防止数值小于0，min是为了防止数值大于宽度
+    fill_width = max(0,min(width,value /100 * width))
+        # 底色
+    pygame.draw.rect(screen,colors[resource],(x,y,width,25),border_radius=4)
+    #    边框
+    pygame.draw.rect(screen,WHITE,(x,y,width,25),2,border_radius=4)
+    text =f"{resource}: {value}"
+    text_surface = small_font.render(text,True,GREEN)
+    screen.blit(text_surface,(x-80,y))
+       
+       
+
+    
+    
+
+
+# 绘制用户界面的函数，intergace是接口的意思
+# 绘制游戏界面
+def draw_main_interface():
+    # 背景
+    screen.blit(pygame.transform.scale(pygame.image.load("../python-game-spacecontrol/sources/photos/2.jpg"),(screen_width,screen_height)),(0,0))
+    
+    # screen.fill(BLACK)
+
+    # 绘制标题
+    # title_surface 是文字的表面，因为pygame会将文字变成图像也即是表面，然后再绘制
+    # 就不能screen.draw_text（”你好“）
+    # 分别是---字体对象：标题  （标题内容，抗锯齿，标题颜色）
+    # title_surface = title_font.render("深空哨站-太空资源管理游戏", True, WHITE)
+    # # screen.blit是绘制函数，用法是screen.blit(在那个表面，坐标位置)
+    
+    # # screen_width // 2是屏幕宽度的一半，title_surface.get_width() // 2是标题表面的宽度的一半，y是30，表示标题的y坐标
+    # screen.blit(title_surface, (screen_width // 2 - title_surface.get_width() // 2,30))
+
+    # 绘制副标题
+    # subtitle=normal_font.render("你将管理这个太空站，请合理管理资源，避免资源被耗尽！", True, YELLOW)
+    # screen.blit(subtitle, (screen_width // 2 - subtitle.get_width() // 2,100))
+
+    
+    # bug：本来打算直接复制一份之前的，但是后面已知报错显示buttonstart_rect，但是buttonstart_rect在函数里没有定义，所以报错。最后决定用按钮的通用函数返回上一级菜单
+    # # 返回按钮
+    # buttonsreturn_width,buttonreturn_heigh = 200,60
+    # buttonreturn_x = screen_width // 2 - buttonsreturn_width // 2
+    # buttonreturn_y = 650
+    
+    # # 检测鼠标是否在按钮上
+    # mouse_pos = pygame.mouse.get_pos()
+    # buttonreturn_rect = pygame.Rect(buttonreturn_x,buttonreturn_y,buttonsreturn_width,buttonreturn_heigh)
+    #     # collidepoint检测碰撞是否在矩形内
+    # is_hover = buttonreturn_rect.collidepoint(mouse_pos)
+
+        
+
+    #     # 悬停按钮变化
+    # buttonreturn_color = BUTTON_HOVER  if is_hover else BUTTON_GREEN
+    #     # 按钮的内部填充
+    # pygame.draw.rect(screen,buttonreturn_color,buttonreturn_rect)
+    #     # 按钮的边框样式，区别在于中间有参数2是边框粗细
+    # pygame.draw.rect(screen,WHITE,buttonreturn_rect,3)
+
+    #     # 按钮的文字
+    # start_text = button_font.render("返回",True,WHITE)
+    #     # 让start_text获取按钮矩形范围，然后按钮的中心作为中心，居中，达成文字整体居中
+    # text_rect = start_text.get_rect(center=buttonreturn_rect.center)
+    # screen.blit(start_text,text_rect)
+
+    #     # 绘制提示文字(200,200,200)是颜色
+    #     # hint_text=normal_font.render("鼠标点击任意位置开始游戏",True,(200,200,200))
+    #     # screen.blit(hint_text,(screen_width //2 - hint_text.get_width() // 2,630))
+    #     # # 返回按钮区域用于点击检测，不然就只是图片不会返回按钮点击，一定要有
+    # return buttonreturn_rect
+
+    # 绘制天数
+    day_surface = title_font.render(f"第 {day} 天",True,YELLOW)
+    screen.blit(day_surface,(1050,30))
+
+    # 资源面板
+    # pygame.draw.rect(screen,PANEL_BLUE,(400,150,300,250),border_radius=10)
+    # panel_title = header_font.render("资源面板",True,WHITE)
+    # screen.blit(panel_title,(100,160))
+
+
+# 注意缩进，这些都是再第二个界面中的绘制的，所以应该是再函数里面的锁进位置
+
+# 资源显示条的布局
+# 开始y
+    start_y = 210
+    for resource,value in resources.items():
+       draw_resource_bar (resource,value,40,start_y,250)
+       start_y += 40
+
+# 绘制模块面板
+# 中间括号是长宽高
+    
+    pygame.draw.rect(screen,(0, 255, 255),(420,150,300,320),border_radius=10)
+    panel_title = header_font.render("模块状态",True,(0, 40, 80))
+    screen.blit(panel_title,(510,170))
+
+# 绘制模块信息
+    module_y = 210
+# 动态列表，遍历所有模块。如果有info.append（）或者有info.pop（）就是长度或内容随时变化啊 的动态列表
+    for module,info in modules.items():
+        # 等级就是获取等级，以此类推
+        text = f"{module}: 等级{info['等级']} (效率:{info['效率']})"
+        text_surface = small_font.render(text,True,(0, 20, 40))
+        screen.blit(text_surface,(440,module_y+25))
+        module_y += 40
+
+        # 绘制返回提示
+        # hint_text = normal_font.render("按ESC键返回开始界面",True,(200,200,200))
+        # screen.blit(hint_text,(screen_width/2 - hint_text.get_width()//2,650))
+
+    # 绘制船员面板
+    pygame.draw.rect(screen,PANEL_BLUE,((screen_width //4) *3-125,150,250,330),border_radius=10)
+    panel_title = header_font.render("船员状态",True,(0, 40, 80))
+    screen.blit(panel_title,((screen_width //4) *3-panel_title.get_width() // 2,170))
+
+    # 绘制船员信息
+    crew_y = 210
+    for role,count in crew.items():
+        text = f"{role}: {count}人"
+        text_surface = small_font.render(text,True,(0, 20, 40))
+        screen.blit(text_surface,((screen_width //4) *3-text_surface.get_width() // 2-5,crew_y+20))
+        crew_y +=40
+
+    # 绘制消息面板括号里面代表x，y，宽度，高度
+    pygame.draw.rect(screen,(0, 40, 80),(50,500,1190,170),border_radius=10)
+    message_surface = normal_font.render(message,True,PANEL_BLUE)
+    screen.blit(message_surface,(screen_width // 2 - message_surface.get_width() // 2,550))
+
+    # 绘制行动按钮
+    button_y = 700
+    button_width,button_height = 150,50
+
+    buttons = {
+        "end_day":pygame.Rect(10,button_y,button_width,button_height),
+        "upgrade":pygame.Rect(170,button_y,button_width,button_height),
+        "explore":pygame.Rect(330,button_y,button_width,button_height),
+        "status":pygame.Rect(490,button_y,button_width,button_height)
+    }
+
+    
+
+    # 括号里面的 是悬停状态的颜色（比正常颜色更亮）。因为定义的时候是def draw_button(rect, text, normal_color, hover_color, font):
+    draw_button(buttons["end_day"],"结束本日",YELLOW,(255, 240, 100),normal_font)
+    draw_button(buttons["upgrade"], "升级模块", YELLOW, (255, 240, 100), normal_font)
+    draw_button(buttons["explore"], "探索", YELLOW, (255, 240, 100), normal_font)
+    draw_button(buttons["status"], "状态", YELLOW, (255, 240, 100), normal_font)
+    
+    # 绘制返回按钮
+    back_button_rect = pygame.Rect(1165,135,120,50)
+    draw_button(back_button_rect,"返回",YELLOW, (0, 230, 120),normal_font)
+    
+    return buttons,back_button_rect
+
+def check_game_over():
+    global game_over
+    creitical_resources = ["能源","食物","水源","氧气"]
+        
+    if any (value <=0 for value in[resources["能源"],resources["水源"],resources["氧气"
+    ],resources["食物"]] ) or day >=20:
+        game_over = True
+        return True
+    else:
+        return False
+        
+
+def end_day():
+    # 结束本日行动
+    global day,resources,message
+
+    # 对于资源
+    for module,info in modules.items():
+        if module == "太阳能板":
+            resources["能源"] += info["效率"] * info["等级"]
+        elif module == "水循环系统":
+            resources["水源"] += info["效率"] * info["等级"]
+        elif module == "氧气生成器":
+            resources["氧气"] += info["效率"] * info["等级"]
+        elif module == "温室":
+            resources["食物"] += info["效率"] * info["等级"]
+        elif module == "采矿机":
+            resources["材料"] += info["效率"] * info["等级"]
+
+    # 对于资源损耗
+    totle_crew = sum(crew.values())
+    consumption = {
+        "能源": max(0,2 + totle_crew),
+        "食物": max(0,1 + totle_crew),
+        "水源": max(0,1 + totle_crew),
+        "氧气": max(0,1 + totle_crew)
+    }
+    # 对于资源创造
+    production = {
+        "能源": min(3 + totle_crew,resources["能源"]),
+        "食物": min(4 + totle_crew,resources["食物"]),
+        "水源": min(2 + totle_crew,resources["水源"]),
+        "氧气": min(1 + totle_crew,resources["氧气"]),
+        "材料": min(4 + totle_crew,resources["材料"])
+    }
+# 对于资源创造
+    for resource,anmount in production.items():
+        resources[resource] += anmount
+    # 从资源中减去消耗
+    for resource,anmount in consumption.items():
+        resources[resource] = max(0,resources[resource] - anmount)
+
+
+    day += 1
+
+    # 随机事件
+    # 有百分之三十的概率发生随机事件
+    if random.random() < 0.3:
+        events = [
+            "小行星雨袭击！部分资源受损。",
+            "发现新的能源矿脉！",
+            "船员健康状况良好。",
+            "外星信号检测...但很快消失了。",
+            "系统维护完成，效率提升。"
+        ]
+
+        message = random.choice(events)
+
+        # 事件带来的影响
+        if "小行星雨" in message:
+            damaged_resource = random.choice(["能源", "食物", "水源", "氧气"])
+            damage = random.randint(10, 20)
+            resources[damaged_resource] = max(0,resources[damaged_resource] - damage)
+            message += f" {damaged_resource}受到了{damage}点伤害。"
+        elif "能源矿脉" in message:
+            resources["能源"] += random.randint(10,20)
+            message += f" 能源增加了{random.randint(10,20)}点。"
+    else:
+        message = f"第{day}天结束！资源已更新。"
+
+# 模块升级
+def upgrade_module():
+    global resources,message
+
+    module_name = list(modules.keys())[0]
+    module = modules[module_name]
+    cost = module["等级"] * 20
+
+    if resources["材料"] >=cost:
+        resources["材料"] -= cost
+        module["等级"] += 1
+        message = f"{module_name}升级到等级{module['等级']}！"
+    else:
+        message = "材料不足，无法升级！"
+
+# 探索行动
+def explore():
+    global resources,message
+    message = "你在附近探索了一会儿，发现了一些新的资源。"
+
+    # 默认探索增加的
+    resources["材料"] += random.randint(1,3)
+    resources["能源"] += random.randint(1,3)
+    resources["食物"] -= max(0,random.randint(0,2))
+    resources["水源"] -= max(0,random.randint(0,1))
+    resources["氧气"] -= max(0,random.randint(0,1))
+
+    # 事件影响的
+    if resources["能源"] >=30:
+        resources["能源"] -= 30
+        discoveries = [
+            "发现富含矿藏的小行星！获得材料。",
+            "找到外星植物样本！获得食物。", 
+            "探测到神秘能源信号！获得能源。",
+            "发现适宜居住的星球！获得所有资源。"
+        ]
+        message = random.choice(discoveries)
+
+        if"材料"in message:
+            reward = random.randint(4,8)
+            resources["材料"] += reward
+            message += f" 获得{reward}点材料。"
+        elif "食物"in message:
+            reward = random.randint(4,8)
+            resources["食物"]+=reward
+            message += f" 获得{reward}点食物。"
+        elif "能源" in message:
+            reward = random.randint(1,3)
+            resources["能源"]+=reward
+            message += f" 获得{reward}点能源。"
+        elif "所有资源" in message:
+            for resource in ["能源", "食物", "水源", "氧气", "材料"]:
+                resources[resource] += random.randint(1,4)
+                message += f" 获得{resources[resource]}点{resource}。"
+    else:
+        message += " 目前资源无法支持远距离探索。"
+
+
+
+
+def reset_game():
+    global day,resources,message,game_over,game_started,modules,crew
+
+    
+    
+
+    resources ={
+    "能源": 50,
+    "食物": 30, 
+    "水源": 10,
+    "氧气": 30,
+    "材料": 0
+}
+
+# 模块
+    modules= {
+     "太阳能板": {"等级": 1, "效率": 5},
+    "水循环系统": {"等级": 1, "效率": 3},
+    "氧气生成器": {"等级": 1, "效率": 4},
+    "温室": {"等级": 1, "效率": 2},
+    "采矿机": {"等级": 1, "效率": 2}
+}
+
+# 人员
+    crew ={
+     "工程师": 2,
+    "科学家": 1,
+    "医生": 1,
+    "飞行员": 1
+}
+
+# 天数从1开始
+    day = 1
+
+# 游戏状态,因为这里只写了游戏的封面，跳转后游戏才开始
+    game_started = False
+    game_over = False
+    
+    message = "欢迎来到深空哨站"
+
+def main():
+    # """主游戏循环"""
+
+    # 游戏正式开始了
+    # 对全局变量的管理
+    global game_started,day,resources,message,game_over
+
+    running = True
+    # 存储按钮的位置
+    # button_rect = None
+
+    print("游戏启动...")
+    
+    while running:  
+        # 处理事件
+
+        # 游戏中检查是不是拥有游戏结束的条件
+        if game_started and not game_over:
+            if check_game_over():
+                game_over = True
+                
+       
+
+        
+        # 游戏开始和主界面
+        if not game_started and not game_over:
+            # 开始界面
+            start_buttons_rect = draw_start_screen()
+            # 按钮释放内存，防止悬空引用带来的报错
+            buttons = None
+            back_button_rect = None
+        elif  game_started and not game_over:
+            # 主界面
+            buttons,back_button_rect = draw_main_interface()
+        elif game_over :
+            # 处理事件
+        #    显示结束界面
+            restart_button = draw_game_over_screen()
+
+            # 如果这里清空了值，那么这里就会报错
+            # restart_button = None
+            
+            # reset_game()
+
+
+         # 更新显示
+        pygame.display.flip()
+        
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+
+            elif event.type == pygame.KEYDOWN:
+                if not game_started:
+                    game_started = True
+                elif event.key == pygame.K_ESCAPE:
+                    game_started = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if not game_started:
+                    # 开始界面按钮检测
+                    button_width, button_height = 200, 60
+                    # 按钮的x为屏幕宽度的一半减去按钮宽度的一半
+                    button_x = screen_width // 2 - button_width // 2
+                    button_y = 550
+                    # 按钮的碰撞箱是pygame的碰撞函数的按钮的长宽高和xy
+                    start_button = pygame.Rect(button_x, button_y, button_width, button_height)
+                    
+                    if start_button.collidepoint(event.pos):
+                        game_started = True
+                elif game_over:
+                    # 对于返回的元组，取第一个元素即restart_button【0】
+                    # hasattr是检查是否有某个属性，相当于if restart_button is not None and restart_button != False and restart_button != ""
+                    if restart_button and hasattr(restart_button[0], 'collidepoint'):
+                        if restart_button[0].collidepoint(event.pos):
+                            reset_game()
+                            game_started = False
+                            game_over = False
+                    
+                    # 空格键是1天
+                # elif event.key == pygame.K_SPACE and game_started:
+                #     day += 1
+                #     for resource in resources:
+                #         # 获取了游戏运行的毫秒，进行了取模操作，得到了0-19的循环数，再减去了10（偏移）得到了-10到9之间的随机数
+                #         change=pygame.time.get_ticks() % 20 - 10
+                #         resources[resource] = max(0,resources[resource] + change)
+
+
+                elif game_started:
+                    if buttons and back_button_rect:
+                        if buttons["end_day"].collidepoint(event.pos):
+                            end_day()
+                        elif buttons["upgrade"].collidepoint(event.pos):
+                            upgrade_module()
+                        elif buttons["explore"].collidepoint(event.pos):
+                            explore()
+                        elif buttons["status"].collidepoint(event.pos):
+                            message = f"状态检查：第{day}天，船员{sum(crew.values())}人"
+
+                        
+           
+                        
+            
+                    
+                            
+                            
+                       
+            
+
+        # 绘制开始界面
+        # if not game_started:
+        #         button_rect = draw_start_screen()
+        # else:
+        #         # 绘制游戏的界面
+        #         # # 绘制界面，要在主循环里加这个上面写的标题等才会显示
+        #         draw_main_interface()
+        
+
+        
+        
+        
+        # 屏幕填充为深蓝色, 之前的东西会被覆盖
+        # screen.fill(DARK_BLUE)
+        
+        # 写界面的地方
+        
+       
+       
+            # 控制帧率
+        clock.tick(FPS)
+    
+    # 退出游戏
+    pygame.quit()
+    sys.exit()
+
+# 直接运行name就是main，被导入到其他文件的时候name是文件名
+# 只有运行这个文件的时候才会调用main函数，就是运行这个文件
+if __name__ == "__main__":
+    main()
+
+
+# 例子 # 只有明确运行时才执行初始化
+# if __name__ == "__main__":
+#     print("你确定要初始化数据库吗？")
+#     response = input("输入 'YES' 确认: ")
+#     if response == "YES":
+#         init_database()
+
+
