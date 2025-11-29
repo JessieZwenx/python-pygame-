@@ -246,9 +246,9 @@ def update_module():
 
 def explore():
     global resources,message,explore_count
-    message = "你在附近探索了一会儿，发现了一些新的资源。"
-    
-
+# 记录默认探索消息
+    # defalt_message = "你在附近探索了一会儿，发现了一些新的资源。"
+    # message = defalt_message
 
     # 默认探索增加的
     resources["材料"] += random.randint(1,3)
@@ -266,30 +266,32 @@ def explore():
             "探测到神秘能源信号！获得能源。",
             "发现适宜居住的星球！获得所有资源。"
         ]
-        message = random.choice(discoveries)
+        # 使用变量存储事件消息
+        event_message = random.choice(discoveries)
 
-        if"材料" in message:
+        if"材料" in event_message:
             reward = random.randint(4,8)
             resources["材料"]+= reward
-            message +=f"你获得了{reward}个材料。"
+            message +=event_message+f"你获得了{reward}个材料。"
             snd2.play ()
-        elif "食物" in message:
+        elif "食物" in event_message:
             reward = random.randint(4,8)
             resources["食物"]+= reward
-            message +=f"你获得了{reward}个食物。"
+            message +=event_message+f"你获得了{reward}个食物。"
             snd2.play ()
-        elif"能源" in message:
+        elif"能源" in event_message:
             reward = random.randint(1,3)
             resources["能源"]+= reward
-            message+=f"你获得了{reward}个能源。"
+            message+=event_message+f"你获得了{reward}个能源。"
             snd2.play ()
-        elif"所有资源" in message:
+        elif"所有资源" in event_message:
             for resource in ["能源", "食物", "水源", "氧气", "材料"]:
                 resources[resource] +=random.randint(1,3)
-                message += f"你获得了{resources[resource]}个{resource}。"
+                message += event_message+f"你获得了{resources[resource]}个{resource}。"
                 snd2.play ()
     else:
-        message +="目前资源无法支持远距离探索"
+        message ="目前资源无法支持远距离探索"
+        # 音乐
         snd3_损失.play ()
 
     # 探索次数和结束本日
@@ -297,12 +299,13 @@ def explore():
     explore_count +=1
     
     if explore_count >= 10:
-        message = "你完成了10次探索，本日行动结束。"
+        # message = "你完成了10次探索，本日行动结束。"
         explore_count = 0
         end_day()
     else:
         # explore_count += 1
-        message = f"你进行了第{explore_count}次探索。(探索次数还剩{10-explore_count}次)"
+        current_message = message
+        message = current_message+f"你进行了第{explore_count}次探索。(探索次数还剩{10-explore_count}次)"
 
 
 # 游戏结束界面的逻辑---
