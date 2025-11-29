@@ -324,8 +324,10 @@ def check_game_over():
 # 游戏重置
 
 def reset_game():
-    global day,resources,message,game_over,game_started,modules,crew
+    global day,resources,message,game_over,game_started,modules,crew,explore_count
 
+    day = 1
+    explore_count = 0
     resources = {
         "能源": 50,
         "食物": 30, 
@@ -347,6 +349,7 @@ def reset_game():
         "飞行员": 1
     }
 
+    
 # 界面
 # 开始界面---
 
