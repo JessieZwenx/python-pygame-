@@ -21,6 +21,8 @@ def run_all_tests():
         # 发现并运行测试
         loader = unittest.TestLoader()
         start_dir = os.path.dirname(__file__)
+
+        # 在tests目录下寻找以test_开头的py文件
         suite = loader.discover(start_dir, pattern='test_*.py')
         
         runner = unittest.TextTestRunner(verbosity=2)

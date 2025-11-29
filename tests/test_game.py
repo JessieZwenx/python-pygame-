@@ -7,6 +7,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.join(current_dir, '..')
 sys.path.append(project_root)
 
+# 测试游戏逻辑的类
 class TestGameLogic(unittest.TestCase):
     
     def setUp(self):

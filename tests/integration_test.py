@@ -1,3 +1,5 @@
+# 此文件用于集成测试，测试游戏的初始化和基本功能
+
 import sys
 import os
 

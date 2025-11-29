@@ -72,6 +72,7 @@ game_over = False
 
 # 常量
 message = "欢迎来到深空哨站"
+# 因为run.bat是在相对路径运行的所以在这里使用相对路径即可
 snd1=pygame.mixer.Sound('sources/music/音效 (2).mp3')
 snd2=pygame.mixer.Sound('sources/music/音效 (1).mp3')
 snd3_切换=pygame.mixer.Sound('sources/music/音效 (5)_切换.mp3')
