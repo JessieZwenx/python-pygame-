@@ -356,7 +356,7 @@ def reset_game():
 def draw_start_screen():
     screen.blit(pygame.transform.scale(pygame.image.load("python-game-spacecontrol - 副本/sources/photos/1.png"),(screen_width,screen_height)),(0,0))
 
-    pygame.draw.rect(screen,(BLACK),(210,100,850,250))
+    # pygame.draw.rect(screen,(BLACK),(210,100,850,250))
     # screen.blit(pygame.transform.scale(pygame.image.load("python-game-spacecontrol - 副本/sources/photos/3.png"),(750,300)),(250,90))
 
     # 绘制标题
@@ -451,19 +451,19 @@ def draw_game_over_screen():
     screen.blit(pygame.transform.scale(pygame.image.load("python-game-spacecontrol - 副本\sources\photos\win.png"),(screen_width,screen_height)),(0,0))
     # screen.fill(BLACK)
 
-    # 重新开始原因
+    # 重新开始界面
     game_over_text = title_font.render("游戏结束",True,WHITE)
     screen.blit(game_over_text,(100,300))
 
     # game_over_reason =normal_font.render ("你的资源严重不足导致无人生还。",True,WHITE)
     # screen.blit(game_over_reason,(100,400))
 
-    # 重新开始按钮
+    # 重新开始按钮参数
     restart_button_width,restart_button_heigh = 200,60
     restart_button_x = screen_width //2- restart_button_width // 2
     restart_button_y = 550
 
-    # 重新开始按钮区域和写过的函数
+    # 重新开始按钮
     restart_button = pygame.Rect(restart_button_x,restart_button_y,restart_button_width,restart_button_heigh)
     draw_button(restart_button,"重新开始",BUTTON_GREEN,BUTTON_HOVER)
 
