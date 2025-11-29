@@ -227,7 +227,9 @@ def end_day():
 def update_module():
     global resources,message
 
-    module_name = list(modules.keys())[0]
+    # 随机选一个模块
+    module_name = random.choice(list(modules.keys()))
+    
     module = modules[module_name]
     cost =module["等级"]*20
 
